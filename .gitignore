@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+*.log
+
+# Keep the small manifest under version control, not the downloaded source clips.
+public/assets/signs/*.mp4
