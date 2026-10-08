@@ -162,6 +162,7 @@ function AuthPage({ register = false }) {
   const { login, register: signUp } = useAuth();
   const go = useNavigate();
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   async function submit(e) {
     e.preventDefault();
@@ -197,7 +198,23 @@ function AuthPage({ register = false }) {
         </label>
         <label>
           Password
-          <input name="password" type="password" minLength="8" required />
+          <span className="password-field">
+            <input
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              minLength="8"
+              required
+            />
+            <button
+              type="button"
+              className="password-toggle"
+              onClick={() => setShowPassword(current => !current)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              title={showPassword ? 'Hide password' : 'Show password'}
+            >
+              👁
+            </button>
+          </span>
         </label>
         <button className="button">{register ? 'Create account' : 'Sign in'}</button>
         <p>
