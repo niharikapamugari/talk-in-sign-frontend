@@ -230,7 +230,7 @@ function AuthPage({ register = false }) {
 }
 
 // CWASA & incluITe inspired Virtual Sign Stage
-function VirtualSignStage({ signs, activeIndex, setActiveIndex }) {
+function VirtualSignStage({ signs, activeIndex, setActiveIndex, unavailableVideos, markVideoUnavailable }) {
   const playable = signs || [];
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -238,6 +238,7 @@ function VirtualSignStage({ signs, activeIndex, setActiveIndex }) {
 
   const current = activeIndex;
   const active = current >= 0 && current < playable.length ? playable[current] : null;
+  const activeHasVideo = Boolean(active?.videoUrl) && !unavailableVideos[active.videoUrl];
 
   const handleNext = () => {
     if (current + 1 < playable.length) {
@@ -275,7 +276,7 @@ function VirtualSignStage({ signs, activeIndex, setActiveIndex }) {
     }
   };
 
-  const videoCount = playable.filter(s => Boolean(s.videoUrl)).length;
+  const videoCount = playable.filter(s => Boolean(s.videoUrl) && !unavailableVideos[s.videoUrl]).length;
   const avatarCount = playable.length - videoCount;
 
   return (
@@ -298,7 +299,7 @@ function VirtualSignStage({ signs, activeIndex, setActiveIndex }) {
       {/* Main Studio Viewport */}
       <div className="stage-viewport">
         {active ? (
-          active.videoUrl ? (
+          activeHasVideo ? (
             <div className="stage-media-wrap">
               <span className="source-pill video-pill">🎥 Licensed ISL Video</span>
               <video
@@ -309,6 +310,7 @@ function VirtualSignStage({ signs, activeIndex, setActiveIndex }) {
                 controls={false}
                 playbackRate={speed}
                 onEnded={isPlaying ? handleNext : undefined}
+                onError={() => markVideoUnavailable(active.videoUrl)}
                 src={active.videoUrl}
               >
                 Sign video for {active.displayName}
@@ -351,8 +353,8 @@ function VirtualSignStage({ signs, activeIndex, setActiveIndex }) {
             <span className="active-word-name">{active.displayName}</span>
           </div>
           <div className="active-word-right">
-            <span className={`format-pill ${active.videoUrl ? 'is-video' : 'is-avatar'}`}>
-              {active.videoUrl ? '🎥 Real Human ISL Video' : '👤 3D Avatar Signing'}
+            <span className={`format-pill ${activeHasVideo ? 'is-video' : 'is-avatar'}`}>
+              {activeHasVideo ? '🎥 Real Human ISL Video' : '👤 3D Avatar Signing'}
             </span>
             <span className="step-counter">
               Sign {current + 1} of {playable.length}
@@ -413,7 +415,7 @@ function VirtualSignStage({ signs, activeIndex, setActiveIndex }) {
         <div className="timeline-tokens">
           {playable.map((s, idx) => {
             const isCur = idx === current;
-            const isVid = Boolean(s.videoUrl);
+            const isVid = Boolean(s.videoUrl) && !unavailableVideos[s.videoUrl];
             return (
               <button
                 key={idx}
@@ -437,6 +439,10 @@ function VirtualSignStage({ signs, activeIndex, setActiveIndex }) {
 
 function Viewer({ result }) {
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [unavailableVideos, setUnavailableVideos] = useState({});
+  const markVideoUnavailable = (url) => {
+    if (url) setUnavailableVideos(current => ({ ...current, [url]: true }));
+  };
 
   if (!result) {
     return (
@@ -463,6 +469,8 @@ function Viewer({ result }) {
         signs={signs}
         activeIndex={activeIndex}
         setActiveIndex={setActiveIndex}
+        unavailableVideos={unavailableVideos}
+        markVideoUnavailable={markVideoUnavailable}
       />
 
       {/* Sign Cards Gallery */}
@@ -474,7 +482,7 @@ function Viewer({ result }) {
       <div className="signs">
         {signs.map((s, i) => {
           const isSelected = i === activeIndex;
-          const isVideo = Boolean(s.videoUrl);
+          const isVideo = Boolean(s.videoUrl) && !unavailableVideos[s.videoUrl];
           return (
             <article
               className={`sign ${isSelected ? 'selected' : ''}`}
@@ -489,7 +497,13 @@ function Viewer({ result }) {
               </div>
 
               {isVideo ? (
-                <video className="sign-image" preload="metadata" src={s.videoUrl} muted>
+                <video
+                  className="sign-image"
+                  preload="metadata"
+                  src={s.videoUrl}
+                  muted
+                  onError={() => markVideoUnavailable(s.videoUrl)}
+                >
                   Preview for {s.displayName}
                 </video>
               ) : (
