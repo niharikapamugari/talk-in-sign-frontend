@@ -4,8 +4,9 @@ import { BrowserRouter, Link, NavLink, Navigate, Route, Routes, useNavigate } fr
 import './styles.css';
 import AvatarSigner from './AvatarSigner';
 import AudioSpeechRecorder from './AudioSpeechRecorder';
+import { API_URL } from './api';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API = API_URL;
 const Auth = createContext();
 const useAuth = () => useContext(Auth);
 

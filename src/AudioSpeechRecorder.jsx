@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { API_URL } from './api';
 
 /**
  * AudioSpeechRecorder provides:
@@ -77,7 +78,7 @@ export default function AudioSpeechRecorder({
       const formData = new FormData();
       formData.append('file', blob, 'recording.webm');
       const token = localStorage.getItem('isl_token');
-      const res = await fetch((import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080') + '/api/translation/transcribe', {
+      const res = await fetch(API_URL + '/api/translation/transcribe', {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData
