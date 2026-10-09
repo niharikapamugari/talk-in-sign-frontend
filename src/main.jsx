@@ -4,7 +4,7 @@ import { BrowserRouter, Link, NavLink, Navigate, Route, Routes, useNavigate } fr
 import './styles.css';
 import AvatarSigner from './AvatarSigner';
 import AudioSpeechRecorder from './AudioSpeechRecorder';
-import { API_URL } from './api';
+import { API_URL, resolveSignVideoUrl } from './api';
 
 const API = API_URL;
 const Auth = createContext();
@@ -238,7 +238,8 @@ function VirtualSignStage({ signs, activeIndex, setActiveIndex, unavailableVideo
 
   const current = activeIndex;
   const active = current >= 0 && current < playable.length ? playable[current] : null;
-  const activeHasVideo = Boolean(active?.videoUrl) && !unavailableVideos[active.videoUrl];
+  const activeVideoUrl = resolveSignVideoUrl(active?.videoUrl);
+  const activeHasVideo = Boolean(activeVideoUrl) && !unavailableVideos[activeVideoUrl];
 
   const handleNext = () => {
     if (current + 1 < playable.length) {
@@ -276,7 +277,10 @@ function VirtualSignStage({ signs, activeIndex, setActiveIndex, unavailableVideo
     }
   };
 
-  const videoCount = playable.filter(s => Boolean(s.videoUrl) && !unavailableVideos[s.videoUrl]).length;
+  const videoCount = playable.filter(s => {
+    const videoUrl = resolveSignVideoUrl(s.videoUrl);
+    return Boolean(videoUrl) && !unavailableVideos[videoUrl];
+  }).length;
   const avatarCount = playable.length - videoCount;
 
   return (
@@ -303,15 +307,15 @@ function VirtualSignStage({ signs, activeIndex, setActiveIndex, unavailableVideo
             <div className="stage-media-wrap">
               <span className="source-pill video-pill">🎥 Licensed ISL Video</span>
               <video
-                key={active.videoUrl}
+                key={activeVideoUrl}
                 ref={videoRef}
                 className="stage-video-element"
                 autoPlay
                 controls={false}
                 playbackRate={speed}
                 onEnded={isPlaying ? handleNext : undefined}
-                onError={() => markVideoUnavailable(active.videoUrl)}
-                src={active.videoUrl}
+                onError={() => markVideoUnavailable(activeVideoUrl)}
+                src={activeVideoUrl}
               >
                 Sign video for {active.displayName}
               </video>
@@ -482,7 +486,8 @@ function Viewer({ result }) {
       <div className="signs">
         {signs.map((s, i) => {
           const isSelected = i === activeIndex;
-          const isVideo = Boolean(s.videoUrl) && !unavailableVideos[s.videoUrl];
+          const videoUrl = resolveSignVideoUrl(s.videoUrl);
+          const isVideo = Boolean(videoUrl) && !unavailableVideos[videoUrl];
           return (
             <article
               className={`sign ${isSelected ? 'selected' : ''}`}
@@ -500,9 +505,9 @@ function Viewer({ result }) {
                 <video
                   className="sign-image"
                   preload="metadata"
-                  src={s.videoUrl}
+                  src={videoUrl}
                   muted
-                  onError={() => markVideoUnavailable(s.videoUrl)}
+                  onError={() => markVideoUnavailable(videoUrl)}
                 >
                   Preview for {s.displayName}
                 </video>
